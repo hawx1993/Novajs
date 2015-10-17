@@ -4,12 +4,8 @@
  *  (c) 2014-2015 trigkit4 http://segmentfault.com/u/trigkit4
  *  Nova is freely distributable under the terms of an MIT-style license.
  */
-//通过创建自执行匿名函数使得该作用域中的代码不会和已有的同名函数、方法和变量以及第三方库冲突
-;(function () {
 
-    this.Nova = {
-        version : '1.0.0'   //属性版本号的定义有利于版本号的检测
-    };
+;(function () {
     // Let $() == Nova();
     window.$ = window.Nova = function (args) {//把$变成公开的全局变量
         return new Nova(args);
@@ -83,12 +79,15 @@
     };
 
     /**************************** Nova.Fn ***********************************/
-    Nova.prototype = {
+Nova.prototype = {
+
+        constructor: Nova,
 
         //页面加载完成事件
         /* $(document).ready(function(){
             })
          */
+
         ready : function(fn){
             if(fn == null){
                 fn = document;
@@ -116,19 +115,9 @@
         },
 
         get: function(idx){
-            return idx === undefined ? slice.call(this) : this[idx >= 0 ? idx : idx + this.length]
+            return idx === undefined ? slice.call(this) : this[idx >= 0 ? idx : idx + this.length];
         },
 
-        //跨浏览器获取样式style
-        getStyle : function (element,name) {
-            var value;
-            if(typeof window.getComputedStyle != 'undefined'){
-                value = window.getComputedStyle(element,null)[name];
-            }else if(typeof element.currentStyle !='undefined'){
-                value = element.currentStyle[name];
-            }
-            return value;
-        },
 
         each: function(callback){
             emptyArray.every.call(this, function(el, idx){
@@ -137,13 +126,14 @@
             return this
         },
 
-        css : function(name,value){
+        css : function(attr,value){
             for(var i=0; i < this.elements.length; i++){
-                this.elements[i].style[name] = value;
+
                 //判断参数长度为1的情况
                 if(arguments.length ==1){
-                    return getStyle(this.elements[i],name);
+                    return getStyle(this.elements[i],attr);
                 }
+                this.elements[i].style[attr] = value;
             }
             return this;
         },
@@ -278,19 +268,6 @@
             return this;
         },
 
-        //跨浏览器添加事件
-        //1.操作的元素，2.事件类型，3.事件处理程序
-        addEvent : function(element,type,handler){
-            if(element.addEventListener){//w3c
-                element.addEventListener(type,handler,false);
-            }else if(element.attachEvent){//IE
-                element.attachEvent('on' + type, function () {
-                    handler.call(element);
-                });
-            }else{
-                element['on' + type] = handler;
-            }
-        },
 
         //跨浏览器移除事件
         removeEvent : function(element,type,handler){
@@ -319,7 +296,7 @@
 
         //hover事件
         hover : function(fnOver,fnOut){
-            for(var i=0;i<this.elements;i++){
+            for(var i=0;i<this.elements.length;i++){
                 addEvent(this.elements[i],'mouseover',fnOver);
                 addEvent(this.elements[i],'mouseout',fnOut);
             }
@@ -328,13 +305,15 @@
 
         //bind
         bind : function(type,fn){
-            for(var i=0;i<this.elements;i++){
+            for(var i=0; i <this.elements.length;i++){
                 addEvent(this.elements[i],type,fn);
             }
             return this;
         },
-
-
+        //获取某一个节点，并返回这个节点对象
+        ret : function (num) {
+            return this.elements[num];
+        },
 
         addClass : function(className){
             for (var i = 0; i < this.elements.length; i ++) {
@@ -343,7 +322,7 @@
                 }
             }
             return this;
-        }
+        },
         //创建cookie
         setCookie : function(name, value, expires, path, domain, secure) {
         var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
@@ -360,7 +339,7 @@
             cookieText += '; secure';
         }
         document.cookie = cookieText;
-    }
+    },
 
      //获取cookie
       getCookie : function(name) {
@@ -379,25 +358,6 @@
 
     };
 
-    //ajax
-    Nova.ajax = function (obj) {
-        var xhr = (function () {
-            if(typeof XMLHttpRequest != 'undefined'){
-                return new window.XMLHttpRequest();
-            }else if(typeof ActiveXObject != 'undefined'){
-                return new ActiveXObject();
-            }
-            accepts = {
-                script : 'text/javascript , application/javascript',
-                xml : 'text/xml , application/xml',
-                html : htmlType,
-                text : 'text/plain'
-            };
-        })();
-
-
-    };
-
     //判断class是否存在
     function hasClass(element, className) {
         return element.className.match(new RegExp('(\\s|^)' +className +'(\\s|$)'));
@@ -407,6 +367,58 @@
     Nova.prototype.extend = function (name,fn) {
         Nova.prototype[name] = fn;
     };
+
+    //跨浏览器添加事件绑定
+    function addEvent(obj, type, fn) {
+        if (typeof obj.addEventListener != 'undefined') {
+            obj.addEventListener(type, fn, false);
+        } else {
+            //创建一个存放事件的哈希表(散列表)
+            if (!obj.events) obj.events = {};
+            //第一次执行时执行
+            if (!obj.events[type]) {
+                //创建一个存放事件处理函数的数组
+                obj.events[type] = [];
+                //把第一次的事件处理函数先储存到第一个位置上
+                if (obj['on' + type]) obj.events[type][0] = fn;
+            } else {
+                //同一个注册函数进行屏蔽，不添加到计数器中
+                if (addEvent.equal(obj.events[type], fn)) return false;
+            }
+            //从第二次开始我们用事件计数器来存储
+            obj.events[type][addEvent.ID++] = fn;
+            //执行事件处理函数
+            obj['on' + type] = addEvent.exec;
+        }
+    }
+    addEvent.ID = 1;
+
+    //执行事件处理函数
+    addEvent.exec = function (event) {
+        var e = event || addEvent.fixEvent(window.event);
+        var es = this.events[e.type];
+        for (var i in es) {
+            es[i].call(this, e);
+        }
+    };
+
+    //同一个注册函数进行屏蔽
+    addEvent.equal = function (es, fn) {
+        for (var i in es) {
+            if (es[i] == fn) return true;
+        }
+        return false;
+    };
+    //跨浏览器获取Style
+    function getStyle(element, attr) {
+        var value;
+        if (typeof window.getComputedStyle != 'undefined') {//W3C
+            value = window.getComputedStyle(element, null)[attr];
+        } else if (typeof element.currentStyle != 'undeinfed') {//IE
+            value = element.currentStyle[attr];
+        }
+        return value;
+    }
 
 
 })();

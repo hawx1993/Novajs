@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        .test{
+            width: 100px;
+            height: 100px;
+            border: 1px solid black;
+        }
+    </style>
+    <script src="../Nova.js"></script>
+    <script src="delay.js"></script>
+    <script type="text/javascript">
+        //ready:等待文档DOM节点树加载完毕后执行
+        $().ready(function () {
+            $("img").css('width','900px').opacity(60).eq(3).css('width','1000px').opacity(50).delay();//自主设置图片大小和透明度
+        Nova('.test').css('background','red');
+        });
+    </script>
+</head>
+<body>
+<div class="test"></div>
+<img src="images/loading.gif" alt="" xsrc="images/1.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/2.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/3.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/4.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/5.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/6.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/7.jpg" class="loading"/><br/>
+<img src="images/loading.gif" alt="" xsrc="images/8.jpg" class="loading"/><br/>
+</body>
+</html>
