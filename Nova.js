@@ -5,13 +5,20 @@
  *  Nova is freely distributable under the terms of an MIT-style license.
  */
 
-;(function () {
-    // Let $() == Nova();
-    window.$ = window.Nova = function (args) {//把$变成公开的全局变量
+;(function (window) {
+
+    window.Nova = window.$ = function (args) {
         return new Nova(args);
     };
-    var emptyArray = [], slice = emptyArray.slice;
-    var Nova  = function(args){
+    var core_version = '1.1.1';
+    var class2Type = {},
+        emptyArray = [],
+        document = window.document,
+        root = this,
+        slice = emptyArray.slice;
+    //为了不被覆盖  Nova不能被定义var or function Nova(){}
+    //执行var inst = new Nova(); inst instanceof Nova成立
+    Nova = function(args){
         this.elements = [];//创建一个空数组，用来存放节点对象
 
         //处理参数是字符串的情况
@@ -79,10 +86,11 @@
     };
 
     /**************************** Nova.Fn ***********************************/
-Nova.prototype = {
+Nova.fn = Nova.prototype = {
 
         constructor: Nova,
-
+        //$().Nova => 1.1.1
+        Nova: core_version,
         //页面加载完成事件
         /* $(document).ready(function(){
             })
@@ -268,6 +276,9 @@ Nova.prototype = {
             return this;
         },
 
+        slice: function(){
+            return $(slice.apply(this, arguments));
+        },
 
         //跨浏览器移除事件
         removeEvent : function(element,type,handler){
@@ -323,6 +334,10 @@ Nova.prototype = {
             }
             return this;
         },
+
+        type : function (obj) {
+            return obj == null ? String(obj) : class2Type[toString.call(obj)] || 'object'
+        },
         //创建cookie
         setCookie : function(name, value, expires, path, domain, secure) {
         var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
@@ -355,6 +370,8 @@ Nova.prototype = {
         }
         return cookieValue;
        }
+
+
 
     };
 
@@ -421,7 +438,7 @@ Nova.prototype = {
     }
 
 
-})();
+})(window);
 
 
 
